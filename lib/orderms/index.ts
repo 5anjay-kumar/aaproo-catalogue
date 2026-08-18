@@ -48,7 +48,11 @@ async function fetchLiveProducts(): Promise<Product[]> {
     const path = offset
       ? `${ordermsConfig.productsPath}?offset=${encodeURIComponent(offset)}`
       : ordermsConfig.productsPath;
-    const result = await ordermsGet<{ records?: unknown[]; offset?: string }>(path);
+    // Tagged "products" so app/api/revalidate/route.ts can bust this exact
+    // cache entry on demand instead of waiting out ORDERMS_CACHE_SECONDS.
+    const result = await ordermsGet<{ records?: unknown[]; offset?: string }>(path, {
+      tags: ["products"],
+    });
     records.push(...(result.records ?? []));
     offset = result.offset;
     page += 1;

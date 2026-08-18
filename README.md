@@ -91,11 +91,29 @@ and `ORDERMS_API_KEY` are set. The "Demo data" badge disappears.
 
 ## Deploy to Vercel
 
+This repo is connected to Vercel's GitHub integration — pushing to `main` deploys
+to production automatically. No manual `vercel --prod` needed.
+
 1. Push this repo to GitHub.
-2. On [vercel.com](https://vercel.com) → **New Project** → import the repo.
+2. On [vercel.com](https://vercel.com) → **New Project** → import the repo (or
+   **Settings → Git → Connect Git Repository** on an existing project).
 3. Add environment variables (from `.env.example`) under **Settings → Environment
-   Variables**. Mark `ORDERMS_API_KEY` as sensitive.
+   Variables**. Mark `ORDERMS_API_KEY` and `REVALIDATE_SECRET` as sensitive.
 4. Deploy. Build command `next build` and output are auto-detected.
+
+### Instant refresh after Airtable changes
+
+Product data auto-refreshes on its own every `ORDERMS_CACHE_SECONDS` (default
+5 min) with zero setup. For instant refresh instead, set up an Airtable
+Automation that calls `POST /api/revalidate` whenever a product changes:
+
+1. In Airtable: **Automations → New automation → Trigger**: "When a record is
+   updated," scoped to the Products table.
+2. **Action → Send a webhook request**:
+   - URL: `https://<your-domain>/api/revalidate`
+   - Method: `POST`
+   - Headers: `x-revalidate-secret` → the same value as `REVALIDATE_SECRET`
+3. Turn the automation on.
 
 Any Node host works too (`npm run build` then `npm start`, Node 18.18+).
 

@@ -40,15 +40,19 @@ function buildUrl(path: string): string {
 /**
  * GET a JSON resource from OrderMS. Errors are normalized to OrderMsError and
  * NEVER include the API key or raw auth headers.
+ *
+ * `tags` let a caller opt this specific fetch into on-demand revalidation (see
+ * app/api/revalidate/route.ts) — left optional so this generic client doesn't
+ * need to know about any particular domain's cache-tag naming.
  */
-export async function ordermsGet<T = unknown>(path: string): Promise<T> {
+export async function ordermsGet<T = unknown>(path: string, opts?: { tags?: string[] }): Promise<T> {
   const url = buildUrl(path);
   let res: Response;
   try {
     res = await fetch(url, {
       headers: { Accept: "application/json", ...authHeaders() },
       // Server-side cache so we don't hammer OrderMS on every page view.
-      next: { revalidate: ordermsConfig.revalidateSeconds },
+      next: { revalidate: ordermsConfig.revalidateSeconds, tags: opts?.tags },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
   } catch (err) {
