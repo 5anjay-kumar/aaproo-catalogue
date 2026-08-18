@@ -1,6 +1,7 @@
 "use client";
 
 import mixpanel from "mixpanel-browser";
+import type { Product } from "./catalogue/types";
 
 /**
  * Thin wrapper around Mixpanel. Analytics is optional — if no token is
@@ -62,4 +63,17 @@ export function incrementProfile(properties: Record<string, number>): void {
 export function registerSuperProperties(properties: Record<string, unknown>): void {
   if (!initialized) return;
   mixpanel.register(properties);
+}
+
+/**
+ * A readable, unique-per-product label for Mixpanel breakdowns. Prefers the
+ * real SKU (e.g. "CUSTOMIZED-SET-38" — unique and already descriptive). Falls
+ * back to name + a short id suffix for the rare product that still has no SKU
+ * (e.g. a quick entry that only filled in Category/Subcategory/Image) — without
+ * this fallback, several different products can share the same `product_name`
+ * (it falls back to Subcategory/Category — see lib/orderms/adapter.ts) and a
+ * report grouped by name would silently merge them into one bar.
+ */
+export function productAnalyticsLabel(product: Pick<Product, "id" | "name" | "sku">): string {
+  return product.sku || `${product.name} (${product.id.slice(-6)})`;
 }

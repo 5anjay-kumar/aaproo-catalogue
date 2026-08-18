@@ -11,7 +11,7 @@ import {
   productDetailsText,
 } from "@/lib/catalogue/client";
 import { productFileBaseName } from "@/lib/catalogue/filenames";
-import { track, incrementProfile } from "@/lib/mixpanel";
+import { track, incrementProfile, productAnalyticsLabel } from "@/lib/mixpanel";
 import { useToast } from "./Toast";
 import { ProductImage } from "./ProductCard";
 import {
@@ -64,6 +64,7 @@ export function ProductModal({
   }, [onClose, many, images.length]);
 
   const fileName = productFileBaseName(product);
+  const label = productAnalyticsLabel(product);
 
   async function handleDownloadOne() {
     if (!hasImages) return;
@@ -75,6 +76,7 @@ export function ProductModal({
         source: "modal",
         product_id: product.id,
         product_name: product.name,
+        product_label: label,
         category: product.category,
       });
       incrementProfile({ "Images Downloaded": 1 });
@@ -84,6 +86,7 @@ export function ProductModal({
         source: "modal",
         product_id: product.id,
         product_name: product.name,
+        product_label: label,
         category: product.category,
       });
       toast("Couldn’t download image", "error");
@@ -99,6 +102,7 @@ export function ProductModal({
       track("Zip Downloaded", {
         product_id: product.id,
         product_name: product.name,
+        product_label: label,
         category: product.category,
         images_included: included,
         images_total: images.length,
@@ -113,6 +117,7 @@ export function ProductModal({
       track("Zip Download Failed", {
         product_id: product.id,
         product_name: product.name,
+        product_label: label,
         category: product.category,
       });
       toast("Couldn’t download images", "error");
@@ -121,20 +126,22 @@ export function ProductModal({
     }
   }
 
-  async function handleCopy(text: string, label: string) {
+  async function handleCopy(text: string, fieldLabel: string) {
     try {
       await copyText(text);
       track("Copied Product Info", {
-        field: label.toLowerCase(),
+        field: fieldLabel.toLowerCase(),
         product_id: product.id,
         product_name: product.name,
+        product_label: label,
       });
-      toast(`${label} copied`);
+      toast(`${fieldLabel} copied`);
     } catch {
       track("Copy Failed", {
-        field: label.toLowerCase(),
+        field: fieldLabel.toLowerCase(),
         product_id: product.id,
         product_name: product.name,
+        product_label: label,
       });
       toast("Couldn’t copy", "error");
     }
@@ -222,11 +229,29 @@ export function ProductModal({
               {product.name}
             </h2>
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-              {product.sku && <span className="text-muted">SKU {product.sku}</span>}
-              {product.price && <span className="font-semibold text-ink">{product.price}</span>}
+            {/* Never wraps to a second line — SKU truncates (it can run long, e.g.
+                "HAIR ACCESSORIES-CATCHERS-3"), price/availability always stay
+                fully visible since they're short and more important to read at a glance. */}
+            <div className="mt-3 flex items-center gap-x-4 text-sm">
+              {product.sku && (
+                <span className="flex min-w-0 flex-1 items-center gap-1 text-muted">
+                  <span className="truncate" title={product.sku}>
+                    SKU {product.sku}
+                  </span>
+                  <button
+                    onClick={() => handleCopy(product.sku!, "SKU")}
+                    aria-label="Copy SKU"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition hover:bg-porcelain hover:text-ink focus-ring"
+                  >
+                    <CopyIcon width={13} height={13} />
+                  </button>
+                </span>
+              )}
+              {product.price && (
+                <span className="shrink-0 font-semibold text-ink">{product.price}</span>
+              )}
               {product.availability && (
-                <span className="text-muted">{product.availability}</span>
+                <span className="shrink-0 text-muted">{product.availability}</span>
               )}
             </div>
 

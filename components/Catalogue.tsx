@@ -5,7 +5,7 @@ import type { Catalogue as CatalogueData, Product } from "@/lib/catalogue/types"
 import { downloadImage } from "@/lib/catalogue/client";
 import { productFileBaseName } from "@/lib/catalogue/filenames";
 import { ALL_CATEGORIES, normalizeLabel, UNCATEGORISED } from "@/lib/catalogue/category";
-import { track, incrementProfile, registerSuperProperties } from "@/lib/mixpanel";
+import { track, incrementProfile, registerSuperProperties, productAnalyticsLabel } from "@/lib/mixpanel";
 import { Header } from "./Header";
 import { CategoryNav } from "./CategoryNav";
 import { ProductCard } from "./ProductCard";
@@ -127,6 +127,7 @@ export function Catalogue({ initial }: { initial: CatalogueData | null }) {
           source: "card",
           product_id: product.id,
           product_name: product.name,
+          product_label: productAnalyticsLabel(product),
           category: product.category,
         });
         incrementProfile({ "Images Downloaded": 1 });
@@ -136,6 +137,7 @@ export function Catalogue({ initial }: { initial: CatalogueData | null }) {
           source: "card",
           product_id: product.id,
           product_name: product.name,
+          product_label: productAnalyticsLabel(product),
           category: product.category,
         });
         toast("Couldn’t download image", "error");
@@ -151,6 +153,7 @@ export function Catalogue({ initial }: { initial: CatalogueData | null }) {
     track("Product Viewed", {
       product_id: p.id,
       product_name: p.name,
+      product_label: productAnalyticsLabel(p),
       category: p.category,
       subcategory: p.subcategory,
       price: p.price,

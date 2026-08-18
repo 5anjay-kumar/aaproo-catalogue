@@ -88,6 +88,7 @@ export function toProduct(raw: Raw, index: number): Product | null {
   return {
     id: str(raw?.id) ?? `p-${index}`,
     name,
+    sku: str(fields.SKU),
     category: str(fields.Category),
     subcategory: str(fields.SubCategory),
     price: toPrice(fields),
